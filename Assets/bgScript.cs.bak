@@ -1,0 +1,138 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using System.IO;
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq; // Required for JToken and related types
+using UnityEngine.Networking;
+
+public class TextManager : MonoBehaviour
+{
+    public static string answerKey;
+
+    public GameObject errorDetectorPrefab;
+
+    public static TextManager Instance;
+
+    private void Start()
+    {
+        GameObject debuggingCube = GameObject.FindGameObjectWithTag("DebuggingCube");
+        GameObject debuggingSphere = GameObject.FindGameObjectWithTag("DebuggingSphere");
+        debuggingCube.GetComponent<Renderer>().material.color = Color.blue;
+        debuggingSphere.GetComponent<Renderer>().material.color = Color.cyan;
+
+        //Load in the JSON with the atom info
+        string sourcePath = Path.Combine(Application.streamingAssetsPath, "molecules.json");
+        string destPath = Path.Combine(Application.persistentDataPath, "molecules.json");
+
+        if (sourcePath.Contains("://") || sourcePath.Contains(":///"))
+        {
+            StartCoroutine(LoadFileFromStreamingAssets(sourcePath, destPath, debuggingSphere));
+        }
+        else
+        {
+            // For platforms like Editor/Windows
+            if (File.Exists(sourcePath))
+            {
+                File.Copy(sourcePath, destPath);
+                debuggingSphere.GetComponent<Renderer>().material.color = Color.green;
+            }
+            else
+            {
+                debuggingSphere.GetComponent<Renderer>().material.color = Color.red;
+                Debug.LogError($"Source file not found: {sourcePath}");
+            }
+        }
+
+        if (File.Exists(destPath))
+        {
+            debuggingCube.GetComponent<Renderer>().material.color = Color.yellow;
+            answerKey = File.ReadAllText(destPath);
+            answerKey = NormalizeJson(answerKey);
+            SortJson(JObject.Parse(answerKey));
+            debuggingCube.GetComponent<Renderer>().material.color = Color.green;
+        }
+        else
+        {
+            debuggingCube.GetComponent<Renderer>().material.color = Color.red;
+        }
+
+
+        Vector3 position = new Vector3(0, 0, 0);
+        GameObject errorDetectorObject = Instantiate(errorDetectorPrefab, position, Quaternion.identity);
+
+        // Access the specific script component
+        ErrorDetector errorDetector = errorDetectorObject.GetComponent<ErrorDetector>();
+        if (errorDetector != null)
+        {
+            ErrorDetector.answerKey = JObject.Parse(answerKey);
+        }
+        errorDetector.initText();
+    }
+
+    private IEnumerator LoadFileFromStreamingAssets(string sourcePath, string destPath, GameObject debuggingSphere)
+    {
+        UnityWebRequest www = UnityWebRequest.Get(sourcePath);
+        yield return www.SendWebRequest(); // Asynchronous
+        
+        if (www.result == UnityWebRequest.Result.Success)
+        {
+            File.WriteAllText(destPath, www.downloadHandler.text);
+            if (File.Exists(destPath)){
+                debuggingSphere.GetComponent<Renderer>().material.color = Color.green;
+            }
+            else{
+                debuggingSphere.GetComponent<Renderer>().material.color = Color.red;
+            }
+            
+        }
+        else
+        {
+            debuggingSphere.GetComponent<Renderer>().material.color = Color.blue;
+        }
+    }
+
+    public JObject getJObjectAnswerKey(){
+        return JObject.Parse(answerKey);
+    }
+
+    public static string NormalizeJson(string json)
+    {
+        // Parse the JSON into a JObject
+        JObject jObject = JObject.Parse(json);
+
+        // Recursively sort the JSON
+        SortJson(jObject);
+
+        // Convert back to a string
+        return JsonConvert.SerializeObject(jObject, Formatting.Indented);
+    }
+
+    private static void SortJson(JToken token)
+    {
+        if (token is JObject jObject)
+        {
+            // Sort properties of JObject
+            var properties = jObject.Properties();
+            foreach (var property in properties)
+            {
+                SortJson(property.Value);
+            }
+        }
+        else if (token is JArray jArray)
+        {
+            // Sort elements in JArray
+            var values = jArray.ToList();
+            foreach (var value in values)
+            {
+                SortJson(value);
+            }
+
+            values.Sort((x, y) => string.Compare(x.ToString(), y.ToString(), StringComparison.Ordinal));
+            jArray.ReplaceAll(values);
+        }
+    }
+}
