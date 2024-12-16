@@ -1,6 +1,9 @@
 # Chemstruct
 ChemStruct is a project I made for my Extended Reality (XR) Class at Bucknell University.
 
+Project Demo:
+[![ChemStruct demo](https://img.youtube.com/vi/7Rspczc9kWk/maxresdefault.jpg)](https://www.youtube.com/watch?v=7Rspczc9kWk)
+
 ## Overview
 This is a sandbox game where you are assigned molecule names, and must build the structure in VR. The more structures you build, the more points you get. Molecules include 16 amino acids, ethane through nonane, formate-butyrate, several small molecules like formaldehyde, O2, and nitrous oxide. 
 
@@ -18,11 +21,26 @@ SMILES would be more accurate, but it turns out it is quite difficult to convert
 
 Furthermore, Oxygen is implemented with SP2 orbital hybridization and has 2 sockets despite all structures only requiring at most 1 or less socket on oxygen (there are no ethers in the list of molecules). Carbon and nitrogen have sockets preset to SP3 hybridization, meaning that carboxylates and imines (if there were any imines) are technically be structurally inaccurate, as they ought to have SP2 bond angles. This is why Tyrosine, Phenylalanine, Tryptophan, and Histadine are excluded from the molecule list. Lastly, both Carbon and nitrogen only have 3 sockets, meaning that you cannot make 4 coordinate carbon, which is not required for any of the molecules on the list.
 
+## Requirements
+<ins>Tested Hardware</ins>
+Meta Quest 3 Headset
+
+<ins>Software</ins>
+Unity (On Meta Quest 3)
+Unity (on laptop)
+
 ## How to run ChemStruct on your machine:
 The project can be run through the following way:
-1) Clone this repository
+1) Clone this repository with
+```git clone https://github.com/MeiersD/ChemStruct.git```
 2) Open Unity Hub and create a project from Add -> Add project from disk and select this repository.
-3) Open the project, connect your XR Headset with a USB-C USB-C connector to your laptop, and open Build Settings, and select your headset from buildsettings.
+3) Open the project, connect your XR Headset with a USB-C USB-C connector to your laptop, and open Build Settings, and select your headset from buildsettings. Make sure that the required packages are installed, namely
+- Newtonsoft.js
+- XR Interaction Toolkit
+- XR Hands
+- OpenXR Plugin
+- TextMeshPro
+
 4) Select Build and Run
 5) Once finished building, the project should load onto your headset automatically.
 
